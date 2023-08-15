@@ -29,13 +29,13 @@ union ByteDouble {
     byte bytes[sizeof(double)];
 };
 
-struct {
+struct Pattern {
     PatternType pattern;
     double interval;
     Color *colors;
     int numColors;
 
-    void twoWire(int bytes) {
+    void twoWire(int bytes) volatile {
         pattern = static_cast<PatternType>(Wire.read());
 
         ByteDouble iv;
@@ -71,7 +71,9 @@ struct {
         frameQueued = true;
         clearWire();
     }
-} pattern;
+};
+
+volatile Pattern pattern;
 
 enum Error:byte {
     Ok,
@@ -80,7 +82,7 @@ enum Error:byte {
     OutOfMemory,
     InvalidRegister,
 };
-Error recvError = Error::Ok;
+volatile Error recvError = Error::Ok;
 
 unsigned long previousMillis = 0;
 
@@ -190,6 +192,7 @@ void receiveEvent(int bytes) {
     } else {
         recvError = Error::MissingData;
     }
+    Wire.write(recvError);
 }
 
 void requestEvent() {
